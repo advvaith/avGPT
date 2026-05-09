@@ -1,0 +1,44 @@
+services:
+  searxng:
+    image: searxng/searxng:latest
+    container_name: avgpt-searxng
+    restart: unless-stopped
+    volumes:
+      - ./searxng:/etc/searxng:rw
+    environment:
+      SEARXNG_BASE_URL: http://searxng:8080/
+      UWSGI_WORKERS: "4"
+      UWSGI_THREADS: "4"
+    networks:
+      - avgpt
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  avgpt:
+    build: .
+    container_name: avgpt
+    restart: unless-stopped
+    depends_on:
+      searxng:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    environment:
+      NANOGPT_API_KEY: ${NANOGPT_API_KEY}
+      SEARXNG_URL: http://searxng:8080
+      APP_PASSWORD: ${APP_PASSWORD}
+      SESSION_SECRET: ${SESSION_SECRET}
+      DATABASE_URL: /app/data/avgpt.db
+    volumes:
+      - avgpt-data:/app/data
+    networks:
+      - avgpt
+
+networks:
+  avgpt:
+
+volumes:
+  avgpt-data:

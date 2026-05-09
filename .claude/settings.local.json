@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:nano-gpt.com)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(openssl rand *)",
+      "Bash(SESSION_SECRET=$\\(openssl rand -hex 32\\) APP_PASSWORD=test NANOGPT_API_KEY=test TAVILY_API_KEY=test npx next build)",
+      "Bash(./node_modules/.bin/tsc --noEmit)"
+    ]
+  }
+}
