@@ -7,7 +7,9 @@
       "Bash(echo \"exit: $?\")",
       "Bash(openssl rand *)",
       "Bash(SESSION_SECRET=$\\(openssl rand -hex 32\\) APP_PASSWORD=test NANOGPT_API_KEY=test TAVILY_API_KEY=test npx next build)",
-      "Bash(./node_modules/.bin/tsc --noEmit)"
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(grep -nB1 -A8 \"^interface Source\\\\|^type Source\\\\b\\\\|^declare interface Source\" /Users/advaithm/code/avGPT/node_modules/@ai-sdk/provider/dist/index.d.ts)",
+      "Bash(grep -nB1 -A10 \"sourceType.*url\\\\|writeSource\\(source\" /Users/advaithm/code/avGPT/node_modules/ai/dist/index.d.ts)"
     ]
   }
 }

@@ -8,9 +8,11 @@ import {
   SquarePen,
   Search,
   LogOut,
+  Settings as SettingsIcon,
 } from "lucide-react";
 import type { Conversation } from "./ChatApp";
 import { cn } from "@/lib/cn";
+import { ConfirmDialog } from "./ConfirmDialog";
 
 type Props = {
   open: boolean;
@@ -20,6 +22,7 @@ type Props = {
   onSelect: (id: string) => void;
   onNewChat: () => void;
   onDelete: (id: string) => void;
+  onOpenSettings: () => void;
 };
 
 export function Sidebar({
@@ -30,9 +33,11 @@ export function Sidebar({
   onSelect,
   onNewChat,
   onDelete,
+  onOpenSettings,
 }: Props) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [pendingDelete, setPendingDelete] = useState<Conversation | null>(null);
 
   const filtered = query.trim()
     ? conversations.filter((c) =>
@@ -113,12 +118,31 @@ export function Sidebar({
             conv={c}
             active={c.id === activeId}
             onSelect={() => onSelect(c.id)}
-            onDelete={() => onDelete(c.id)}
+            onDelete={() => setPendingDelete(c)}
           />
         ))}
       </div>
 
-      <UserPill />
+      <UserPill onOpenSettings={onOpenSettings} />
+
+      <ConfirmDialog
+        open={pendingDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDelete(null);
+        }}
+        title="Delete chat?"
+        description={
+          pendingDelete
+            ? `"${pendingDelete.title || "New chat"}" will be removed permanently.`
+            : undefined
+        }
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => {
+          if (pendingDelete) onDelete(pendingDelete.id);
+          setPendingDelete(null);
+        }}
+      />
     </aside>
   );
 }
@@ -176,7 +200,7 @@ function ConversationRow({
         aria-label="Delete chat"
         onClick={(e) => {
           e.stopPropagation();
-          if (confirm("Delete this chat?")) onDelete();
+          onDelete();
         }}
         className="invisible rounded p-1 text-[var(--color-fg-muted)] hover:bg-[var(--color-bg)] hover:text-red-500 group-hover:visible"
       >
@@ -186,20 +210,27 @@ function ConversationRow({
   );
 }
 
-function UserPill() {
+function UserPill({ onOpenSettings }: { onOpenSettings: () => void }) {
   async function logout() {
     await fetch("/api/auth/logout", { method: "POST" });
     window.location.href = "/login";
   }
   return (
-    <div className="m-2 flex items-center gap-2.5 rounded-xl px-2 py-2 hover:bg-[var(--color-sidebar-hover)]">
+    <div className="m-2 flex items-center gap-1 rounded-xl px-2 py-2 hover:bg-[var(--color-sidebar-hover)]">
       <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-xs font-semibold text-black">
         U
       </div>
-      <div className="min-w-0 flex-1">
+      <div className="ml-2 min-w-0 flex-1">
         <div className="truncate text-sm font-medium">User</div>
         <div className="truncate text-xs text-[var(--color-fg-muted)]">Self-hosted</div>
       </div>
+      <button
+        onClick={onOpenSettings}
+        aria-label="Settings"
+        className="rounded-md p-1.5 text-[var(--color-fg-muted)] hover:bg-[var(--color-bg)] hover:text-[var(--color-fg)]"
+      >
+        <SettingsIcon size={14} />
+      </button>
       <button
         onClick={logout}
         aria-label="Sign out"

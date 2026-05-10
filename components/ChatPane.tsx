@@ -6,10 +6,11 @@ import { PanelLeftOpen } from "lucide-react";
 import { ModelPicker } from "./ModelPicker";
 import { Composer } from "./Composer";
 import { Message } from "./Message";
-import { EmptyHeading, EmptyStateChips } from "./EmptyState";
+import { EmptyHeading } from "./EmptyState";
 import { ThinkingDots } from "./ThinkingDots";
 import { InterruptedBanner } from "./InterruptedBanner";
 import type { ModelInfo } from "./ChatApp";
+import type { SearchSettings } from "@/lib/settings";
 
 type Props = {
   conversationId: string | null;
@@ -20,6 +21,7 @@ type Props = {
   onTurnFinished: () => void;
   onSidebarToggle: () => void;
   sidebarOpen: boolean;
+  settings: SearchSettings;
 };
 
 type StoredMessage = {
@@ -38,6 +40,7 @@ export function ChatPane({
   onTurnFinished,
   onSidebarToggle,
   sidebarOpen,
+  settings,
 }: Props) {
   // The conv id ChatPane is tracking. Initialised from prop on mount, then
   // updated *only* via the x-conversation-id header from streamed responses.
@@ -95,6 +98,7 @@ export function ChatPane({
       onSidebarToggle={onSidebarToggle}
       sidebarOpen={sidebarOpen}
       scrollRef={scrollRef}
+      settings={settings}
     />
   );
 }
@@ -110,6 +114,7 @@ function ChatPaneInner({
   onSidebarToggle,
   sidebarOpen,
   scrollRef,
+  settings,
 }: {
   initialMessages: StoredMessage[];
   convId: string | null;
@@ -121,6 +126,7 @@ function ChatPaneInner({
   onSidebarToggle: () => void;
   sidebarOpen: boolean;
   scrollRef: React.RefObject<HTMLDivElement | null>;
+  settings: SearchSettings;
 }) {
   // useChat reads `body` via an internal ref each render, so passing the
   // current `convId`/`model` here keeps subsequent requests in sync without
@@ -147,7 +153,7 @@ function ChatPaneInner({
       content: m.content,
       data: { citations: m.citations ?? null },
     })) as never,
-    body: { model, conversationId: convId },
+    body: { model, conversationId: convId, settings },
     onResponse: (res) => {
       const id = res.headers.get("x-conversation-id");
       if (id && !convIdRef.current) onConvIdResolved(id);
@@ -253,7 +259,6 @@ function ChatPaneInner({
           <div className="w-full max-w-3xl">
             <EmptyHeading />
             {composer}
-            <EmptyStateChips onPick={(p) => setInput(p)} />
           </div>
         </div>
       ) : (
@@ -279,6 +284,21 @@ function ChatPaneInner({
                   initialCitations={
                     (m as unknown as { data?: { citations?: { title: string; url: string }[] } })
                       .data?.citations ?? undefined
+                  }
+                  streamedCitations={
+                    (
+                      m as unknown as {
+                        parts?: Array<{
+                          type: string;
+                          source?: { title?: string; url?: string };
+                        }>;
+                      }
+                    ).parts
+                      ?.filter((part) => part.type === "source" && part.source?.url)
+                      .map((part) => ({
+                        title: part.source?.title || part.source?.url || "Source",
+                        url: part.source!.url!,
+                      }))
                   }
                 />
               ))}

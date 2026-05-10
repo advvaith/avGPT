@@ -3,6 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { Sidebar } from "./Sidebar";
 import { ChatPane } from "./ChatPane";
+import { SettingsDialog } from "./SettingsDialog";
+import { clampSettings, DEFAULT_SETTINGS, type SearchSettings } from "@/lib/settings";
 
 export type Conversation = {
   id: string;
@@ -35,6 +37,25 @@ export function ChatApp() {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [model, setModel] = useState<string>("");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [settings, setSettings] = useState<SearchSettings>(DEFAULT_SETTINGS);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  useEffect(() => {
+    const raw = localStorage.getItem("avgpt:settings");
+    if (raw) {
+      try {
+        setSettings(clampSettings(JSON.parse(raw)));
+      } catch {
+        /* ignore invalid stored value */
+      }
+    }
+  }, []);
+
+  const updateSettings = useCallback((next: SearchSettings) => {
+    const safe = clampSettings(next);
+    setSettings(safe);
+    localStorage.setItem("avgpt:settings", JSON.stringify(safe));
+  }, []);
 
   const refreshConversations = useCallback(async () => {
     const res = await fetch("/api/conversations");
@@ -101,6 +122,7 @@ export function ChatApp() {
         onSelect={selectConv}
         onNewChat={newChat}
         onDelete={deleteConv}
+        onOpenSettings={() => setSettingsOpen(true)}
       />
       <ChatPane
         key={paneKey}
@@ -115,6 +137,13 @@ export function ChatApp() {
         onTurnFinished={refreshConversations}
         onSidebarToggle={() => setSidebarOpen((v) => !v)}
         sidebarOpen={sidebarOpen}
+        settings={settings}
+      />
+      <SettingsDialog
+        open={settingsOpen}
+        onOpenChange={setSettingsOpen}
+        settings={settings}
+        onChange={updateSettings}
       />
     </div>
   );

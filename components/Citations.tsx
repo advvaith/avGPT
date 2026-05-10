@@ -1,11 +1,24 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
+import { cn } from "@/lib/cn";
 
-export function Citations({ items }: { items: { title: string; url: string }[] }) {
+export function Citations({
+  items,
+  placement = "below",
+}: {
+  items: { title: string; url: string }[];
+  placement?: "below" | "inline";
+}) {
   if (items.length === 0) return null;
   return (
-    <div className="mt-4 flex flex-wrap gap-2 border-t border-[var(--color-border)] pt-3">
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-2",
+        placement === "below" && "mt-4 border-t border-[var(--color-border)] pt-3",
+        placement === "inline" && "mb-3",
+      )}
+    >
       <span className="text-xs font-medium text-[var(--color-fg-muted)]">Sources</span>
       {items.map((c, i) => {
         let host = "";

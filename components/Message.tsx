@@ -20,6 +20,7 @@ type Props = {
   onRegenerate?: () => void;
   toolInvocations?: ToolInvocation[];
   initialCitations?: { title: string; url: string }[];
+  streamedCitations?: { title: string; url: string }[];
 };
 
 export function Message({
@@ -29,6 +30,7 @@ export function Message({
   onRegenerate,
   toolInvocations,
   initialCitations,
+  streamedCitations,
 }: Props) {
   const [copied, setCopied] = useState(false);
 
@@ -40,9 +42,20 @@ export function Message({
 
   if (role === "user") {
     return (
-      <div className="my-4 flex justify-end">
-        <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-3xl bg-[var(--color-bubble-user)] px-4 py-2.5 text-[15px] leading-7">
-          {content}
+      <div className="group my-4 flex justify-end">
+        <div className="flex max-w-[85%] flex-col items-end">
+          <div className="whitespace-pre-wrap break-words rounded-3xl bg-[var(--color-bubble-user)] px-4 py-2.5 text-[15px] leading-7">
+            {content}
+          </div>
+          <div className="mt-1 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+            <button
+              aria-label="Copy"
+              onClick={copy}
+              className="rounded-md p-1.5 text-[var(--color-fg-muted)] hover:bg-[var(--color-bg-elevated)] hover:text-[var(--color-fg)]"
+            >
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -63,7 +76,13 @@ export function Message({
       }
     }
   }
-  const citations = liveCitations.length ? liveCitations : initialCitations ?? [];
+  const citations = [
+    ...liveCitations,
+    ...(streamedCitations ?? []),
+    ...(initialCitations ?? []),
+  ].filter(
+    (item, index, items) => items.findIndex((other) => other.url === item.url) === index,
+  );
 
   return (
     <div className="group my-4">
@@ -93,11 +112,11 @@ export function Message({
             </div>
           )}
 
+          {citations.length > 0 && <Citations items={citations} placement="inline" />}
+
           <div className={cn("prose-chat", streaming && "cursor-blink")}>
             <Markdown>{content}</Markdown>
           </div>
-
-          {citations.length > 0 && <Citations items={citations} />}
 
           {!streaming && (
             <div className="mt-2 flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
