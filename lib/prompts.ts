@@ -9,3 +9,18 @@ Hard rules — these are not negotiable:
 6. If after searching you still cannot find grounding, say so plainly — e.g. "I couldn't find a reliable source for X."
 
 Style: clear, direct, friendly. Use Markdown. Use code blocks for code. Keep responses tight unless the user asks for depth.`;
+
+/**
+ * Returns the base system prompt annotated with the current date, time, and
+ * year, so the model has fresh temporal context on every user turn.
+ */
+export function buildSystemPrompt(now: Date = new Date()): string {
+  const stamp = [
+    "",
+    "Current date & time (reference for any date/time-sensitive request):",
+    `- Local: ${now.toString()}`,
+    `- ISO:   ${now.toISOString()}`,
+    `- Year:  ${now.getFullYear()}`,
+  ].join("\n");
+  return `${SEARCH_ONLY_SYSTEM_PROMPT}${stamp}`;
+}

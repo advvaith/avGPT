@@ -15,7 +15,7 @@ import {
   createWebSearchTool,
   type SearchResponse,
 } from "@/lib/search";
-import { SEARCH_ONLY_SYSTEM_PROMPT } from "@/lib/prompts";
+import { buildSystemPrompt } from "@/lib/prompts";
 import { db, conversations, messages as messagesTable } from "@/lib/db";
 import { requireSession } from "@/lib/auth";
 import { generateTitle } from "@/lib/title";
@@ -259,7 +259,7 @@ export async function POST(req: Request) {
     })
     .run();
 
-  const systemMessages = [{ role: "system" as const, content: SEARCH_ONLY_SYSTEM_PROMPT }];
+  const systemMessages = [{ role: "system" as const, content: buildSystemPrompt() }];
   if (preSearch) {
     systemMessages.push({
       role: "system" as const,
